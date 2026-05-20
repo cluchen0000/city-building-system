@@ -1,0 +1,33 @@
+# 虚拟环境
+venv/
+ENV/
+env/
+
+# 模型、权重、大数据
+*.pt
+*.pth
+weights/
+models/
+runs/
+training/
+
+# 原始数据集不上传
+data/rsod/
+dataset/
+annotations/
+
+# 缓存、日志
+__pycache__/
+*.pyc
+*.log
+tmp/
+output/
+
+# 编辑器
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# 环境变量
+.env
