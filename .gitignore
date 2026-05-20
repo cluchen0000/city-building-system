@@ -21,7 +21,7 @@ uploads/
 results/
 
 # 数据文件
-data/
+data/dataset/
 
 # Docker 数据
 storage/
