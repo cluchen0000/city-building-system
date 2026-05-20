@@ -1,6 +1,9 @@
 """
 城市建筑检测系统 - FastAPI 应用入口
 """
+from dotenv import load_dotenv
+load_dotenv()  # 加载 backend/.env
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles

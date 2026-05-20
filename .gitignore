@@ -1,24 +1,46 @@
-# Python虚拟环境
+# Python 虚拟环境
 .venv/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.egg-info/
+
 # 环境变量
 .env
 .env.local
-# 数据⽂件
-data/
+
+# 模型文件
+model_file/*.pt
+model_file/*.pth
+runs/
+
+# 运行时产物
+static/
 uploads/
 results/
-# Docker数据
+
+# 数据文件
+data/
+
+# Docker 数据
 storage/
-# 模型⽂件
-models/*.pt
-# IDE配置
+
+# 前端
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# IDE 配置
 .vscode/
 .idea/
 *.swp
 *.swo
-# ⽇志⽂件
+
+# 日志文件
 *.log
+
+# macOS
+.DS_Store
+yolo11n.pt

@@ -22,13 +22,15 @@ class BuildingDetector:
         self._load_model()
 
     def _load_model(self):
-        if not os.path.exists(settings.MODEL_PATH):
+        model_path = settings.MODEL_PATH
+        # yolo11n.pt 是 COCO 预训练模型，YOLO 会自动从网络下载，不需要本地存在
+        if not os.path.exists(model_path) and "yolo11n" not in model_path:
             raise FileNotFoundError(
-                f"模型文件不存在: {settings.MODEL_PATH}\n"
+                f"模型文件不存在: {model_path}\n"
                 "请将训练好的 .pt 模型放到 backend/model_file/ 目录"
             )
-        self.model = YOLO(settings.MODEL_PATH)
-        print(f"模型已加载: {self.model_name}")
+        self.model = YOLO(model_path)
+        print(f"模型已加载: {os.path.basename(model_path)}")
 
     def detect(self, image_path: str) -> DetectResult:
         """
