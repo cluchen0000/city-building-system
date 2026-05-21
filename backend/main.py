@@ -37,6 +37,10 @@ async def root():
     return {"name": settings.APP_NAME, "version": settings.APP_VERSION}
 
 
+@app.get("/api/health")
+async def api_health():
+    return {"status": "healthy"}
+
 @app.get("/health")
 async def health():
     return {"status": "healthy"}

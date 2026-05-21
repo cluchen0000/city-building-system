@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: city-building-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=false
+      - CONFIDENCE=0.3
+      - IOU=0.45
+      - GSD=0.3
+      - CORS_ORIGINS=http://localhost:80
+    volumes:
+      - ./backend/static:/app/static
+      - ./backend/model_file:/app/model_file
+    networks:
+      - city-building-network
+
+  frontend:
+    build: ./frontend
+    container_name: city-building-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - city-building-network
+
+networks:
+  city-building-network:
+    driver: bridge

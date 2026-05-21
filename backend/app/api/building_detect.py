@@ -26,11 +26,14 @@ async def detect_single(file: UploadFile = File(...)):
         raise HTTPException(400, "仅支持图片文件")
 
     try:
+        import traceback
         # 保存上传文件
         filepath, filename = await save_upload(file, settings.UPLOAD_DIR)
+        print(f"图片已保存: {filepath}")
 
         # 执行检测
         result = detector.detect(filepath)
+        print("检测完成")
 
         # 补充图片 URL
         result.image_url = f"/{settings.UPLOAD_DIR}/{filename}"
@@ -42,6 +45,9 @@ async def detect_single(file: UploadFile = File(...)):
         )
 
     except FileNotFoundError as e:
+        print(f"文件未找到: {e}")
         raise HTTPException(500, str(e))
     except Exception as e:
+        print(f"检测错误: {e}")
+        print(traceback.format_exc())
         raise HTTPException(500, f"检测失败: {str(e)}")
