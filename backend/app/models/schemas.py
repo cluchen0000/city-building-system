@@ -105,3 +105,51 @@ class VideoDetectResponse(BaseModel):
     video_info: VideoInfo
     summary: VideoSummary
     frames: List[VideoFrameResult]
+
+
+# ============================================================
+# 摄像头实时检测相关模型
+# ============================================================
+
+class CameraBox(BaseModel):
+    """摄像头检测框（不含面积，用于实时渲染）"""
+    x1: float
+    y1: float
+    x2: float
+    y2: float
+    confidence: float
+    class_id: int
+    class_name: str
+    chinese_name: str
+
+
+class CameraDetectData(BaseModel):
+    """摄像头单帧检测数据"""
+    boxes: List[CameraBox] = []
+    frame_index: int = 0
+    fps: float = 0.0
+    detection_time: float = 0.0
+    total_objects: int = 0
+
+
+class CameraDetectResponse(BaseModel):
+    """摄像头检测 API 响应"""
+    success: bool
+    message: str = ""
+    data: Optional[CameraDetectData] = None
+
+
+class CameraStartRequest(BaseModel):
+    """启动摄像头检测请求"""
+    confidence_threshold: float = 0.3
+    iou_threshold: float = 0.45
+    inference_interval: int = 2
+
+
+class CameraStatusResponse(BaseModel):
+    """摄像头检测状态响应"""
+    is_running: bool
+    frame_count: int
+    fps: float
+    confidence_threshold: float
+    iou_threshold: float

@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.config import settings
 from app.api.building_detect import router as detect_router
+from app.api.camera import router as camera_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -30,6 +31,7 @@ app.mount("/static", StaticFiles(directory=settings.STATIC_DIR), name="static")
 
 # 注册路由
 app.include_router(detect_router)
+app.include_router(camera_router)
 
 
 @app.get("/")
