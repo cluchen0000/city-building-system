@@ -11,9 +11,21 @@ import type {
   CameraDetectionData,
   CameraDetectResponse,
   StartDetectionRequest,
+  DetectionHistory,
+  HistoryListResponse,
+  HistoryDeleteResponse,
 } from '../types'
 
 const API_BASE = ''
+
+function getAuthHeaders(): Headers {
+  const token = localStorage.getItem('token')
+  const headers = new Headers()
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`)
+  }
+  return headers
+}
 
 export interface CameraApiResponse {
   success: boolean
@@ -24,8 +36,11 @@ export async function detectSingleImage(file: File): Promise<DetectResult> {
   const formData = new FormData()
   formData.append('file', file)
 
+  const headers = getAuthHeaders()
+
   const response = await fetch(`${API_BASE}/api/detect/single`, {
     method: 'POST',
+    headers,
     body: formData,
   })
 
@@ -53,8 +68,11 @@ export async function detectBatchImages(files: File[]): Promise<BatchDetectResul
     formData.append('files', file)
   })
 
+  const headers = getAuthHeaders()
+
   const response = await fetch(`${API_BASE}/api/detect/batch`, {
     method: 'POST',
+    headers,
     body: formData,
   })
 
@@ -84,8 +102,11 @@ export async function detectVideo(file: File): Promise<VideoDetectResult> {
   const formData = new FormData()
   formData.append('file', file)
 
+  const headers = getAuthHeaders()
+
   const response = await fetch(`${API_BASE}/api/detect/video`, {
     method: 'POST',
+    headers,
     body: formData,
   })
 
@@ -113,11 +134,12 @@ export interface CameraDetectResult {
 export async function detectCameraFrame(
   imageBase64: string,
 ): Promise<CameraDetectionData> {
+  const headers = getAuthHeaders()
+  headers.set('Content-Type', 'application/json')
+
   const response = await fetch(`${API_BASE}/api/camera/detect`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify({ image: imageBase64 }),
   })
 
@@ -137,11 +159,12 @@ export async function detectCameraFrame(
 export async function startCameraDetection(
   params: StartDetectionRequest,
 ): Promise<CameraApiResponse> {
+  const headers = getAuthHeaders()
+  headers.set('Content-Type', 'application/json')
+
   const response = await fetch(`${API_BASE}/api/camera/start`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(params),
   })
 
@@ -153,11 +176,12 @@ export async function startCameraDetection(
 }
 
 export async function stopCameraDetection(): Promise<CameraApiResponse> {
+  const headers = getAuthHeaders()
+  headers.set('Content-Type', 'application/json')
+
   const response = await fetch(`${API_BASE}/api/camera/stop`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
   })
 
   if (!response.ok) {
@@ -168,11 +192,12 @@ export async function stopCameraDetection(): Promise<CameraApiResponse> {
 }
 
 export async function pauseCameraDetection(): Promise<CameraApiResponse> {
+  const headers = getAuthHeaders()
+  headers.set('Content-Type', 'application/json')
+
   const response = await fetch(`${API_BASE}/api/camera/pause`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
   })
 
   if (!response.ok) {
@@ -183,11 +208,81 @@ export async function pauseCameraDetection(): Promise<CameraApiResponse> {
 }
 
 export async function resumeCameraDetection(): Promise<CameraApiResponse> {
+  const headers = getAuthHeaders()
+  headers.set('Content-Type', 'application/json')
+
   const response = await fetch(`${API_BASE}/api/camera/resume`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
+  })
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+  }
+
+  return await response.json()
+}
+
+// 历史记录相关API
+export interface HistoryListResult {
+  histories: DetectionHistory[]
+  total: number
+}
+
+export async function getHistoryList(
+  page: number = 1,
+  pageSize: number = 10,
+  detectionType?: string,
+): Promise<HistoryListResult> {
+  const headers = getAuthHeaders()
+
+  let url = `${API_BASE}/api/history/list?page=${page}&page_size=${pageSize}`
+  if (detectionType) {
+    url += `&detection_type=${detectionType}`
+  }
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers,
+  })
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+  }
+
+  const json: HistoryListResponse = await response.json()
+
+  if (json.code !== 200) {
+    throw new Error(json.message || '获取历史记录失败')
+  }
+
+  return {
+    histories: json.data,
+    total: json.total,
+  }
+}
+
+export async function deleteHistory(historyId: number): Promise<HistoryDeleteResponse> {
+  const headers = getAuthHeaders()
+
+  const response = await fetch(`${API_BASE}/api/history/${historyId}`, {
+    method: 'DELETE',
+    headers,
+  })
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+  }
+
+  return await response.json()
+}
+
+export async function deleteAllHistory(): Promise<HistoryDeleteResponse> {
+  const headers = getAuthHeaders()
+
+  const response = await fetch(`${API_BASE}/api/history/`, {
+    method: 'DELETE',
+    headers,
   })
 
   if (!response.ok) {

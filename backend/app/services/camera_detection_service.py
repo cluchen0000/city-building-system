@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional, List
 import numpy as np
 
 from app.config import settings
-from app.services.detect_service import detector
+from app.services.detect_service import get_detector
 from app.models.schemas import CameraDetectionBox
 
 
@@ -144,7 +144,7 @@ class CameraDetectionService:
         with self._request_semaphore:
             start_time = time.time()
 
-            results = detector.model.predict(
+            results = get_detector().model.predict(
                 source=image,
                 conf=self._confidence_threshold,
                 iou=self._iou_threshold,
@@ -161,7 +161,7 @@ class CameraDetectionService:
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
                     confidence = float(box.conf[0])
                     class_id = int(box.cls[0])
-                    class_name = detector.model.names.get(class_id, f"class_{class_id}")
+                    class_name = get_detector().model.names.get(class_id, f"class_{class_id}")
                     chinese_name = self.get_class_chinese_name(class_name)
 
                     boxes.append({

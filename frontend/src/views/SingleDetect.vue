@@ -1,17 +1,32 @@
 <template>
   <div class="single-detect">
-    <h1>🏢 单图建筑检测</h1>
-    
-    <ImgUpload
-      :loading="loading"
-      @detect="detect"
-      @fileChange="onFileChange"
-      @ready="onCanvasReady"
-    />
+    <div class="page-header">
+      <h1>🏢 单图建筑检测</h1>
+      <p class="page-description">上传遥感影像或航拍图片，智能识别建筑物并计算面积</p>
+    </div>
 
-    <ResultShow v-if="detectResult" :result="detectResult" />
+    <div class="main-content">
+      <div class="card upload-card">
+        <div class="card-header">
+          <h3 class="card-title">📁 上传图片</h3>
+        </div>
+        <div class="card-body">
+          <ImgUpload
+            :loading="loading"
+            @detect="detect"
+            @fileChange="onFileChange"
+            @ready="onCanvasReady"
+          />
+        </div>
+      </div>
 
-    <div v-if="errorMsg" class="error-tip">{{ errorMsg }}</div>
+      <ResultShow v-if="detectResult" :result="detectResult" />
+
+      <div v-if="errorMsg" class="alert alert-error">
+        <span class="alert-icon">❌</span>
+        <span>{{ errorMsg }}</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -52,9 +67,6 @@ async function detect() {
   try {
     const result = await detectSingleImage(selectedFile.value)
     detectResult.value = result
-    if (previewCanvas) {
-      drawBoxesOnCanvas(previewCanvas, result.boxes)
-    }
   } catch (err: any) {
     console.error(err)
     errorMsg.value = `检测失败: ${err.message}`
@@ -62,48 +74,86 @@ async function detect() {
     loading.value = false
   }
 }
-
-function drawBoxesOnCanvas(canvas: HTMLCanvasElement, boxes: DetectionBox[]) {
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-
-  const img = new Image()
-  img.onload = () => {
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-    boxes.forEach(box => {
-      const { x1, y1, x2, y2, confidence, class_name, area_sqm } = box
-      ctx.strokeStyle = '#ff4d4f'
-      ctx.lineWidth = 2
-      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1)
-      ctx.fillStyle = '#ff4d4f'
-      ctx.font = 'bold 14px "Segoe UI"'
-      const label = `${class_name} ${(confidence * 100).toFixed(1)}%`
-      const areaText = area_sqm ? ` ${area_sqm}m²` : ''
-      ctx.fillText(label + areaText, x1, y1 - 5)
-    })
-  }
-  img.src = imageUrl.value
-}
 </script>
 
 <style scoped>
 .single-detect {
   max-width: 900px;
   margin: 0 auto;
+  padding: 24px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-description {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: var(--transition-normal);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.card-body {
   padding: 20px;
 }
 
-.single-detect h1 {
-  color: #262626;
-  margin: 0 0 20px 0;
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
 }
 
-.error-tip {
-  color: #ff4d4f;
-  margin-top: 20px;
-  padding: 12px 16px;
+.alert-error {
   background: #fff2f0;
   border: 1px solid #ffccc7;
-  border-radius: 4px;
+  color: var(--danger-color);
+}
+
+.alert-icon {
+  font-size: 18px;
 }
 </style>

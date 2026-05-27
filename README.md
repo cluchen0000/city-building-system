@@ -1,143 +1,254 @@
-# 城市建筑检测系统
+# 🏢 城市建筑检测系统
 
-基于遥感影像的建筑物检测与面积统计系统。
+基于 YOLO11 的遥感影像建筑物检测与面积统计系统，支持单图检测、批量检测、视频检测和实时摄像头检测。
 
-## 功能特性
+## ✨ 功能特性
 
-- **单图检测**: 上传单张遥感影像进行建筑物检测与面积统计
-- **建筑物识别**: 使用深度学习模型检测遥感影像中的建筑物
-- **面积计算**: 根据像素与地理坐标换算实际建筑面积
-- **结果可视化**: 展示检测标注图与面积统计数据
+- 🖼️ **单图检测**：上传单张遥感/航拍影像，自动检测建筑物并计算面积
+- 📦 **批量检测**：同时上传多张图片进行批量处理
+- 🎬 **视频检测**：上传视频文件，自动抽帧进行建筑检测
+- 📹 **摄像头检测**：调用设备摄像头进行实时建筑识别
+- 📜 **历史记录**：自动保存检测历史，支持查看、筛选和删除
+- 🔐 **用户认证**：登录/注册功能，支持 JWT 令牌认证
 
-## 技术栈
+## 🛠️ 技术栈
 
 ### 后端
-- Python 3.10+
-- FastAPI
-- PyTorch
-- OpenCV
-- NumPy
+- **框架**: FastAPI 0.104+
+- **语言**: Python 3.10+
+- **数据库**: SQLite（嵌入式，无需独立服务）
+- **AI模型**: YOLO11（Ultralytics）
+- **认证**: JWT + Passlib
 
 ### 前端
-- Vue 3 + TypeScript
-- Vite
-- TailwindCSS / Bootstrap
-- Axios
+- **框架**: Vue 3 + TypeScript
+- **构建工具**: Vite 5
+- **路由**: Vue Router
+- **样式**: CSS3（响应式设计）
 
-## 项目结构
+## 📁 项目结构
 
 ```
 city-building-system/
 ├── backend/                    # 后端代码
 │   ├── app/                    # 应用模块
 │   │   ├── api/                # REST API接口
-│   │   │   ├── __init__.py
-│   │   │   └── building_detect.py    # 单图检测专属接口
+│   │   │   ├── building_detect.py    # 建筑检测接口
+│   │   │   ├── camera.py             # 摄像头检测接口
+│   │   │   ├── auth.py               # 用户认证接口
+│   │   │   ├── users.py              # 用户管理接口
+│   │   │   └── history.py            # 历史记录接口
 │   │   ├── models/             # 数据模型
-│   │   │   ├── __init__.py
-│   │   │   ├── database.py           # 数据库连接
+│   │   │   ├── database.py           # 数据库表定义
 │   │   │   └── schemas.py            # 请求响应数据模型
 │   │   ├── services/           # 业务逻辑层
-│   │   │   ├── __init__.py
-│   │   │   ├── detect_service.py     # 模型推理业务
-│   │   │   └── area_calc_service.py  # 建筑面积换算计算
+│   │   │   ├── detect_service.py     # YOLO检测服务
+│   │   │   └── area_calc_service.py  # 面积计算服务
 │   │   ├── utils/              # 工具函数
-│   │   │   ├── __init__.py
-│   │   │   ├── img_handle.py         # 遥感图像预处理
-│   │   │   └── geo_calc.py           # 地理像素面积换算工具
-│   │   ├── __init__.py
-│   │   └── config.py           # 全局路径、参数配置
-│   ├── model_file/             # 存放训练完成模型权重
-│   │   └── building_best.pt
-│   ├── uploads/                # 前端上传单张遥感影像存放
-│   ├── detect_result/          # 检测标注图、面积结果存储
-│   ├── main.py                 # FastAPI后端启动入口
-│   ├── requirements.txt        # 后端依赖清单
-│   └── .env                    # 环境变量配置
-│
+│   │   ├── config.py           # 配置管理
+│   │   └── main.py             # 应用入口
+│   ├── model_file/             # YOLO模型权重
+│   ├── static/                 # 静态文件（上传/结果）
+│   └── requirements.txt        # Python依赖
 ├── frontend/                   # 前端代码
-│   ├── public/                 # 静态资源
-│   │   ├── favicon.ico
-│   │   └── index.html
-│   ├── src/                    # 源代码
-│   │   ├── api/                # API请求封装
-│   │   │   └── detectApi.ts    # 单图检测接口请求
-│   │   ├── assets/             # 静态资源
-│   │   │   └── css/
-│   │   │       └── global.css  # 全局样式
-│   │   ├── components/         # Vue组件
-│   │   │   ├── ImgUpload.vue   # 单张遥感图上传组件
-│   │   │   └── ResultShow.vue  # 检测图+面积数据展示组件
+│   ├── src/
+│   │   ├── views/              # 页面组件
+│   │   │   ├── SingleDetect.vue      # 单图检测
+│   │   │   ├── BatchDetect.vue       # 批量检测
+│   │   │   ├── VideoDetect.vue       # 视频检测
+│   │   │   ├── CameraDetect.vue      # 摄像头检测
+│   │   │   ├── History.vue           # 历史记录
+│   │   │   ├── login.vue             # 登录页面
+│   │   │   └── register.vue          # 注册页面
+│   │   ├── components/         # 通用组件
+│   │   ├── api/                # API调用封装
 │   │   ├── router/             # 路由配置
-│   │   │   └── index.ts
-│   │   ├── views/              # 页面视图
-│   │   │   └── SingleDetect.vue # 单图检测主页面
-│   │   ├── App.vue             # 根组件
-│   │   └── main.ts             # 入口文件
-│   ├── package.json            # 前端依赖配置
-│   ├── vite.config.ts          # Vite配置
-│   └── tsconfig.json           # TypeScript配置
-│
-├── data/                       # 数据处理
-│   ├── dataset/               # 遥感建筑物数据集存放
-│   ├── train.py               # 模型训练脚本
-│   ├── convert_data.py        # 数据集格式转换
-│   └── single_predict.py      # 单图统一推理脚本
-│
-├── deploy/                    # 部署配置
-│   ├── start_env.sh           # 环境一键搭建脚本
-│   ├── Dockerfile             # Docker镜像构建
-│   └── run_doc.md             # 基础部署运行文档
-│
-├── .gitignore
-└── README.md
+│   │   └── types/              # TypeScript类型定义
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.ts
+├── docker-compose.yml          # Docker Compose配置
+├── start.bat                   # Windows启动脚本
+├── stop.bat                    # Windows停止脚本
+└── README.md                   # 项目说明文档
 ```
 
-## 快速开始
+## 🚀 快速开始
 
-### 环境要求
+### 方式一：本地开发模式
 
+#### 1. 环境要求
 - Python 3.10+
-- Node.js 16+
-- PyTorch 2.0+
+- Node.js 18+
 
-### 后端运行
-
+#### 2. 启动后端
 ```bash
 cd backend
 pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8000
+python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### 前端运行
-
+#### 3. 启动前端
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-## API接口
+#### 4. 访问应用
+- 前端页面：http://localhost:5173
+- 后端API：http://localhost:8000
+- API文档：http://localhost:8000/docs
 
-| 接口 | 方法 | 描述 |
+### 方式二：Docker部署
+
+#### 1. 构建并启动
+```bash
+docker-compose up -d --build
+```
+
+#### 2. 访问应用
+- 前端页面：http://localhost
+- 后端API：http://localhost:8000
+
+#### 3. 管理命令
+```bash
+# 停止服务
+docker-compose down
+
+# 查看日志
+docker-compose logs -f
+
+# 重启服务
+docker-compose restart
+```
+
+### 方式三：一键启动（Windows）
+
+```bash
+# 启动服务
+start.bat
+
+# 停止服务
+stop.bat
+```
+
+## 📡 API接口
+
+### 认证接口
+| 方法 | 路径 | 说明 |
 |------|------|------|
-| `/api/detect/single` | POST | 单图检测 |
+| POST | `/api/auth/register` | 用户注册 |
+| POST | `/api/auth/login` | 用户登录 |
+| GET | `/api/auth/verify` | 验证Token |
 
-## 数据流转
+### 检测接口
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/detect/single` | 单图检测 |
+| POST | `/api/detect/batch` | 批量检测 |
+| POST | `/api/detect/video` | 视频检测 |
 
+### 历史记录接口
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/history/list` | 获取历史记录 |
+| DELETE | `/api/history/{id}` | 删除单条记录 |
+| DELETE | `/api/history/` | 清空所有记录 |
+
+## 🗄️ 数据库说明
+
+### 数据库类型
+- **SQLite**（嵌入式文件数据库）
+- 数据库文件：`backend/app.db`
+- 自动创建，无需手动配置
+
+### 数据表
+
+#### users（用户表）
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | Integer | 主键 |
+| username | String | 用户名（唯一） |
+| email | String | 邮箱（唯一） |
+| hashed_password | String | 加密密码 |
+| created_at | DateTime | 创建时间 |
+
+#### detection_histories（检测历史表）
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | Integer | 主键 |
+| user_id | Integer | 关联用户ID |
+| detection_type | String | 检测类型 |
+| image_url | String | 原始图片路径 |
+| result_url | String | 结果图片路径 |
+| building_count | Integer | 建筑数量 |
+| total_area | Float | 总面积 |
+| confidence_avg | Float | 平均置信度 |
+| details | Text | 详细信息 |
+| created_at | DateTime | 检测时间 |
+
+## 📝 使用说明
+
+1. **注册账号**：访问首页 → 点击"立即注册" → 填写用户名、邮箱、密码
+2. **登录系统**：使用注册的账号登录
+3. **选择检测模式**：
+   - 单图检测：上传单张图片进行检测
+   - 批量检测：上传多张图片批量处理
+   - 视频检测：上传视频文件进行抽帧检测
+   - 摄像头检测：使用设备摄像头实时检测
+4. **查看结果**：检测完成后显示标注图和面积统计
+5. **查看历史**：点击导航栏"历史记录"查看检测历史
+
+## 🔧 配置说明
+
+### 后端配置（backend/.env）
+```env
+# 应用配置
+APP_NAME=城市建筑检测系统
+APP_VERSION=1.0.0
+HOST=0.0.0.0
+PORT=8000
+DEBUG=true
+
+# CORS配置
+CORS_ORIGINS=["http://localhost:5173"]
+
+# 模型配置
+MODEL_PATH=model_file/building_best.pt
+CONFIDENCE=0.5
+IOU=0.7
+GSD=0.1
+
+# 静态文件目录
+STATIC_DIR=static
+UPLOAD_DIR=static/uploads
+RESULT_DIR=static/results
 ```
-前端上传 → API调用 → 图像预处理 → 模型推理 → 面积计算 → 结果存储 → 前端展示
-```
 
-## 团队分工
+## 📁 数据持久化
 
-| 角色 | 职责 | 负责模块 |
-|------|------|----------|
-| **前端开发** | Vue界面开发、文件上传、结果展示 | `frontend/` |
-| **后端开发** | FastAPI接口、模型推理、业务逻辑 | `backend/app/api/`, `backend/app/services/` |
-| **数据处理** | 模型训练、数据集管理 | `data/`, `backend/model_file/` |
-| **部署运维** | Docker配置、系统部署 | `deploy/` |
+Docker部署时，以下目录会挂载到宿主机：
+- `backend/static/` - 上传文件和检测结果
+- `backend/model_file/` - YOLO模型权重
+- `backend/app.db` - 数据库文件
 
-## 许可证
+## 🤝 贡献指南
+
+1. Fork 本仓库
+2. 创建功能分支 (`git checkout -b feature/xxx`)
+3. 提交修改 (`git commit -am 'Add feature xxx'`)
+4. 推送到分支 (`git push origin feature/xxx`)
+5. 创建 Pull Request
+
+## 📄 许可证
 
 MIT License
+
+## 📧 联系方式
+
+如有问题或建议，请提交 Issue 或联系开发者。
+
+---
+
+**🏗️ 项目状态**: 开发完成 | **最后更新**: 2026-05-27
