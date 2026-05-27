@@ -14,6 +14,7 @@ from app.models.schemas import (
 
 router = APIRouter(prefix="/api", tags=["建筑检测"])
 
+# 启动时确保目录存在
 ensure_dir(settings.UPLOAD_DIR, settings.RESULT_DIR)
 
 
@@ -24,14 +25,18 @@ async def detect_single(file: UploadFile = File(...)):
 
     上传遥感/航拍影像，返回检测到的建筑框和面积统计
     """
+    # 校验文件类型
     if file.content_type and not file.content_type.startswith("image/"):
         raise HTTPException(400, "仅支持图片文件")
 
     try:
+        # 保存上传文件
         filepath, filename = await save_upload(file, settings.UPLOAD_DIR)
 
+        # 执行检测
         result = detector.detect(filepath)
 
+        # 补充图片 URL
         result.image_url = f"/{settings.UPLOAD_DIR}/{filename}"
 
         return DetectResponse(
