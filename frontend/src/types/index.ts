@@ -119,3 +119,29 @@ export interface StartDetectionRequest {
   iou_threshold: number
   inference_interval: number
 }
+
+// 历史记录相关类型
+export interface DetectionHistory {
+  id: number
+  user_id: number
+  detection_type: string
+  image_url?: string
+  result_url?: string
+  building_count: number
+  total_area: number
+  confidence_avg: number
+  details?: string
+  created_at: string
+}
+
+export interface HistoryListResponse {
+  code: number
+  message: string
+  total: number
+  data: DetectionHistory[]
+}
+
+export interface HistoryDeleteResponse {
+  code: number
+  message: string
+}

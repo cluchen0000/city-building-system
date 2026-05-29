@@ -222,4 +222,11 @@ class BuildingDetector:
         return frames_result, video_info, summary
 
 
-detector = BuildingDetector()
+_detector = None
+
+def get_detector() -> BuildingDetector:
+    """延迟加载检测器"""
+    global _detector
+    if _detector is None:
+        _detector = BuildingDetector()
+    return _detector

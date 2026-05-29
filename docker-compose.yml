@@ -1,0 +1,32 @@
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: city-building-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/static:/app/static
+      - ./backend/model_file:/app/model_file
+    environment:
+      - DEBUG=false
+      - DATABASE_URL=sqlite:///./app.db
+      - CORS_ORIGINS=["http://localhost:80"]
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: city-building-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  default:
+    name: city-building-network

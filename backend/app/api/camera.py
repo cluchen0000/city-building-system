@@ -4,10 +4,12 @@
 import base64
 import cv2
 import numpy as np
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 
 from app.services.camera_detection_service import camera_detection_service
+from app.utils.auth import get_current_user
+from app.models.database import User
 from app.models.schemas import (
     CameraDetectResponse,
     CameraDetectionData,
@@ -34,7 +36,10 @@ class DetectFrameRequest(BaseModel):
 
 
 @router.post("/start", response_model=SimpleResponse)
-async def start_camera_detection(request: StartDetectionRequest):
+async def start_camera_detection(
+    request: StartDetectionRequest,
+    current_user: User = Depends(get_current_user)
+):
     """
     启动摄像头检测服务
     """
@@ -55,7 +60,7 @@ async def start_camera_detection(request: StartDetectionRequest):
 
 
 @router.post("/stop", response_model=SimpleResponse)
-async def stop_camera_detection():
+async def stop_camera_detection(current_user: User = Depends(get_current_user)):
     """
     停止摄像头检测服务
     """
@@ -67,7 +72,7 @@ async def stop_camera_detection():
 
 
 @router.post("/pause", response_model=SimpleResponse)
-async def pause_camera_detection():
+async def pause_camera_detection(current_user: User = Depends(get_current_user)):
     """
     暂停摄像头检测
     """
@@ -79,7 +84,7 @@ async def pause_camera_detection():
 
 
 @router.post("/resume", response_model=SimpleResponse)
-async def resume_camera_detection():
+async def resume_camera_detection(current_user: User = Depends(get_current_user)):
     """
     恢复摄像头检测
     """
@@ -91,7 +96,7 @@ async def resume_camera_detection():
 
 
 @router.get("/status", response_model=CameraStatusResponse)
-async def get_camera_status():
+async def get_camera_status(current_user: User = Depends(get_current_user)):
     """
     获取摄像头检测服务当前状态
     """
@@ -106,7 +111,10 @@ async def get_camera_status():
 
 
 @router.post("/detect", response_model=CameraDetectResponse)
-async def detect_frame(request: DetectFrameRequest):
+async def detect_frame(
+    request: DetectFrameRequest,
+    current_user: User = Depends(get_current_user)
+):
     """
     接收前端发送的图像并返回检测结果
 

@@ -18,6 +18,31 @@ class DetectionBox(BaseModel):
     area_sqm: Optional[float] = None  # 实际面积（平方米）
 
 
+class DetectionHistoryResponse(BaseModel):
+    """检测历史记录响应"""
+    id: int
+    user_id: int
+    detection_type: str
+    image_url: Optional[str] = None
+    result_url: Optional[str] = None
+    building_count: int
+    total_area: float
+    confidence_avg: float
+    details: Optional[str] = None
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class HistoryListResponse(BaseModel):
+    """历史记录列表响应"""
+    code: int
+    message: str
+    total: int
+    data: List[DetectionHistoryResponse]
+
+
 class BuildingStats(BaseModel):
     """建筑统计"""
     total: int = 0

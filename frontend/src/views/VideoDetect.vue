@@ -1,93 +1,125 @@
 <template>
   <div class="video-detect">
-    <h1>🎬 视频建筑检测</h1>
-
-    <div class="upload-area">
-      <label class="upload-btn">
-        <input
-          type="file"
-          accept="video/*"
-          @change="onFileChange"
-          class="file-input"
-        />
-        选择视频
-      </label>
-      <span v-if="selectedVideo" class="file-name">{{ selectedVideo.name }}</span>
-      <button
-        class="detect-btn"
-        @click="detect"
-        :disabled="!selectedVideo || loading"
-      >
-        {{ loading ? '检测中...' : '开始视频检测' }}
-      </button>
+    <div class="page-header">
+      <h1>🎬 视频建筑检测</h1>
+      <p class="page-description">上传视频文件，自动抽帧进行建筑检测与面积统计</p>
     </div>
 
-    <div v-if="loading" class="loading-tip">
-      ⏳ 正在处理视频，请稍候（视频检测可能需要较长时间）
+    <div class="card upload-card">
+      <div class="card-header">
+        <h3 class="card-title">📁 上传视频</h3>
+      </div>
+      <div class="card-body">
+        <div class="upload-controls">
+          <label class="btn btn-primary">
+            <input
+              type="file"
+              accept="video/*"
+              @change="onFileChange"
+              class="file-input"
+            />
+            <span class="btn-icon">📹</span>
+            <span>选择视频</span>
+          </label>
+          <span v-if="selectedVideo" class="file-info">{{ selectedVideo.name }}</span>
+          <button
+            class="btn btn-success"
+            @click="detect"
+            :disabled="!selectedVideo || loading"
+          >
+            <span class="btn-icon">{{ loading ? '⏳' : '🚀' }}</span>
+            <span>{{ loading ? '检测中...' : '开始视频检测' }}</span>
+          </button>
+        </div>
+
+        <div v-if="loading" class="loading-overlay">
+          <div class="loading-spinner"></div>
+          <span class="loading-text">正在处理视频，请稍候...</span>
+        </div>
+
+        <div v-if="errorMsg" class="alert alert-error">
+          <span class="alert-icon">❌</span>
+          <span>{{ errorMsg }}</span>
+        </div>
+
+        <div v-if="selectedVideo && !videoResults.length" class="video-preview">
+          <h4 class="preview-title">🎥 视频预览</h4>
+          <div class="video-wrapper">
+            <video ref="videoRef" controls class="preview-video">
+              <source :src="videoUrl" />
+            </video>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div v-if="errorMsg" class="error-tip">{{ errorMsg }}</div>
-
-    <div v-if="selectedVideo && !videoResults.length" class="video-preview">
-      <h3>视频预览</h3>
-      <video ref="videoRef" controls class="preview-video">
-        <source :src="videoUrl" />
-      </video>
-    </div>
-
-    <div v-if="videoResults.length > 0" class="results-area">
-      <h3>视频检测结果</h3>
-
-      <div v-if="videoInfo" class="info-card">
-        <h4>视频信息</h4>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">时长</span>
-            <span class="info-value">{{ formatDuration(videoInfo.duration) }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">帧率</span>
-            <span class="info-value">{{ videoInfo.fps }} FPS</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">总帧数</span>
-            <span class="info-value">{{ videoInfo.total_frames }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">抽帧间隔</span>
-            <span class="info-value">每 {{ videoInfo.frame_interval }} 帧</span>
+    <div v-if="videoResults.length > 0" class="results-section">
+      <div class="card info-card">
+        <div class="card-header">
+          <h3 class="card-title">📋 视频信息</h3>
+        </div>
+        <div class="card-body">
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-icon">⏱️</div>
+              <div class="info-value">{{ formatDuration(videoInfo?.duration || 0) }}</div>
+              <div class="info-label">时长</div>
+            </div>
+            <div class="info-item">
+              <div class="info-icon">🎞️</div>
+              <div class="info-value">{{ videoInfo?.fps || 0 }} FPS</div>
+              <div class="info-label">帧率</div>
+            </div>
+            <div class="info-item">
+              <div class="info-icon">📊</div>
+              <div class="info-value">{{ videoInfo?.total_frames || 0 }}</div>
+              <div class="info-label">总帧数</div>
+            </div>
+            <div class="info-item">
+              <div class="info-icon">🔄</div>
+              <div class="info-value">每 {{ videoInfo?.frame_interval || 10 }} 帧</div>
+              <div class="info-label">抽帧间隔</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div v-if="summary" class="summary-card">
-        <h4>检测汇总</h4>
-        <div class="summary-grid">
-          <div class="summary-item">
-            <span class="summary-label">处理帧数</span>
-            <span class="summary-value">{{ summary.processed_frames }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">总检测目标</span>
-            <span class="summary-value highlight">{{ summary.total_objects }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">平均每帧目标</span>
-            <span class="summary-value">{{ summary.avg_objects_per_frame.toFixed(2) }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">总耗时</span>
-            <span class="summary-value">{{ summary.total_cost_time.toFixed(2) }} 秒</span>
+      <div class="card summary-card">
+        <div class="card-header">
+          <h3 class="card-title">📊 检测汇总</h3>
+        </div>
+        <div class="card-body">
+          <div class="summary-grid">
+            <div class="summary-item">
+              <div class="summary-icon">🎬</div>
+              <div class="summary-value">{{ summary?.processed_frames || 0 }}</div>
+              <div class="summary-label">处理帧数</div>
+            </div>
+            <div class="summary-item highlight">
+              <div class="summary-icon">🏢</div>
+              <div class="summary-value">{{ summary?.total_objects || 0 }}</div>
+              <div class="summary-label">总检测目标</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-icon">📈</div>
+              <div class="summary-value">{{ (summary?.avg_objects_per_frame || 0).toFixed(2) }}</div>
+              <div class="summary-label">平均每帧目标</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-icon">⏱️</div>
+              <div class="summary-value">{{ (summary?.total_cost_time || 0).toFixed(2) }}s</div>
+              <div class="summary-label">总耗时</div>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="frames-header">
-        <h4>抽帧检测结果</h4>
+        <h3>🖼️ 抽帧检测结果</h3>
         <span class="frame-count">共 {{ videoResults.length }} 帧</span>
       </div>
 
-      <div class="frames-list">
+      <div class="frames-grid">
         <div
           v-for="(frame, index) in videoResults"
           :key="index"
@@ -97,11 +129,13 @@
             <span class="frame-index">第 {{ frame.frame_index }} 帧</span>
             <span class="frame-time">{{ formatDuration(frame.timestamp) }}</span>
           </div>
-          <div class="frame-stats">
-            <span>检测数: {{ frame.total_objects }}</span>
-          </div>
-          <div v-if="frame.result_url" class="frame-image">
-            <img :src="frame.result_url" class="annotated-img" />
+          <div class="frame-body">
+            <div class="frame-stats">
+              <span class="stat">检测数: {{ frame.total_objects }}</span>
+            </div>
+            <div v-if="frame.result_url" class="frame-image-wrapper">
+              <img :src="frame.result_url" class="frame-image" />
+            </div>
           </div>
         </div>
       </div>
@@ -180,113 +214,197 @@ onUnmounted(() => {
 .video-detect {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 24px;
 }
 
-.video-detect h1 {
-  color: #262626;
-  margin: 0 0 20px 0;
+.page-header {
+  margin-bottom: 24px;
 }
 
-.upload-area {
+.page-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 20px 0;
-  padding: 16px;
-  background: #f5f5f5;
-  border-radius: 8px;
 }
 
-.upload-btn {
-  padding: 10px 20px;
-  background: #1890ff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+.page-description {
   font-size: 14px;
+  color: var(--text-tertiary);
+  margin: 0;
 }
 
-.upload-btn:hover {
-  background: #40a9ff;
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.upload-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: #ffffff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, var(--success-color) 0%, var(--success-dark) 100%);
+  color: #ffffff;
+}
+
+.btn-success:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.3);
+}
+
+.btn-icon {
+  font-size: 16px;
 }
 
 .file-input {
   display: none;
 }
 
-.file-name {
-  color: #595959;
+.file-info {
   font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
 }
 
-.detect-btn {
-  padding: 10px 24px;
-  background: #52c41a;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  margin-top: 16px;
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
   font-size: 14px;
-}
-
-.detect-btn:disabled {
-  background: #95de64;
-  cursor: not-allowed;
-}
-
-.detect-btn:not(:disabled):hover {
-  background: #73d13d;
-}
-
-.loading-tip {
-  color: #1890ff;
-  margin: 16px 0;
-  padding: 12px 16px;
-  background: #e6f7ff;
-  border: 1px solid #91d5ff;
-  border-radius: 4px;
-}
-
-.error-tip {
-  color: #ff4d4f;
-  margin: 20px 0;
-  padding: 12px 16px;
-  background: #fff2f0;
-  border: 1px solid #ffccc7;
-  border-radius: 4px;
-}
-
-.video-preview h3 {
-  margin: 20px 0 12px 0;
-  color: #262626;
-}
-
-.preview-video {
-  max-width: 100%;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  background: #000;
-}
-
-.results-area h3 {
-  margin: 24px 0 16px 0;
-  color: #262626;
-}
-
-.info-card,
-.summary-card {
-  background: #f5f5f5;
-  padding: 20px;
-  border-radius: 8px;
   margin-bottom: 20px;
 }
 
-.info-card h4,
-.summary-card h4 {
-  margin: 0 0 16px 0;
-  color: #262626;
+.alert-error {
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  color: var(--danger-color);
+}
+
+.alert-icon {
+  font-size: 18px;
+}
+
+.video-preview {
+  margin-top: 20px;
+}
+
+.preview-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+}
+
+.video-wrapper {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background: #000;
+}
+
+.preview-video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.results-section {
+  margin-top: 20px;
 }
 
 .info-grid,
@@ -299,98 +417,120 @@ onUnmounted(() => {
 .info-item,
 .summary-item {
   text-align: center;
-  padding: 12px;
-  background: white;
-  border-radius: 6px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  transition: var(--transition-normal);
 }
 
-.info-label,
-.summary-label {
-  display: block;
-  color: #8c8c8c;
-  font-size: 12px;
-  margin-bottom: 4px;
+.info-item:hover,
+.summary-item:hover {
+  transform: translateY(-2px);
+}
+
+.summary-item.highlight {
+  background: linear-gradient(135deg, rgba(24, 144, 255, 0.08) 0%, rgba(9, 109, 217, 0.08) 100%);
+  border: 1px solid rgba(24, 144, 255, 0.2);
+}
+
+.summary-item.highlight .summary-value {
+  color: var(--primary-color);
+}
+
+.info-icon,
+.summary-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
 }
 
 .info-value,
 .summary-value {
-  display: block;
-  color: #262626;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
 }
 
-.summary-value.highlight {
-  color: #1890ff;
-  font-size: 20px;
-  font-weight: 600;
+.info-label,
+.summary-label {
+  font-size: 12px;
+  color: var(--text-tertiary);
 }
 
 .frames-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 20px 0 12px 0;
+  margin-bottom: 16px;
 }
 
-.frames-header h4 {
+.frames-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
   margin: 0;
-  color: #262626;
 }
 
 .frame-count {
-  color: #8c8c8c;
-  font-size: 13px;
+  font-size: 14px;
+  color: var(--text-tertiary);
 }
 
-.frames-list {
+.frames-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 16px;
 }
 
 .frame-card {
-  background: white;
-  border: 1px solid #d9d9d9;
-  border-radius: 8px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
+  border: 1px solid var(--border-light);
 }
 
 .frame-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: #fafafa;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 14px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .frame-index {
-  color: #262626;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .frame-time {
-  color: #8c8c8c;
   font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.frame-body {
+  padding: 14px 16px;
 }
 
 .frame-stats {
-  padding: 12px 16px;
-  display: flex;
-  gap: 20px;
-  color: #8c8c8c;
+  margin-bottom: 12px;
+}
+
+.stat {
   font-size: 13px;
-  border-bottom: 1px solid #f0f0f0;
+  color: var(--text-tertiary);
+}
+
+.frame-image-wrapper {
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
 }
 
 .frame-image {
-  padding: 12px 16px;
-}
-
-.annotated-img {
-  max-width: 100%;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  width: 100%;
+  height: auto;
+  display: block;
 }
 </style>
